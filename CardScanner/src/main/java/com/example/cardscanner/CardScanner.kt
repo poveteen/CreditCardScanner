@@ -294,7 +294,8 @@ class CardScanner(private val cardDetails: CreditCardDetails) :
 
                 val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
 
-                val image = InputImage.fromBitmap(bitmap.scaleImage(), 0)
+                //val image = InputImage.fromBitmap(bitmap.scaleImage(), 0)
+                val image = InputImage.fromBitmap(bitmap.preprocessForOcr(), 0)
 
                 recognizer.process(image)
 
