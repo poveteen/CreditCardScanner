@@ -5,6 +5,11 @@ import android.util.Log
 import com.google.mlkit.vision.text.Text
 import java.util.regex.Pattern
 
+import android.graphics.Canvas
+import android.graphics.ColorMatrix
+import android.graphics.ColorMatrixColorFilter
+import android.graphics.Paint
+
 const val ERROR_TAG = "cardScanner"
 
 const val INFO_TAG = "cardScanner_info"
@@ -108,4 +113,38 @@ private fun ArrayList<String>.getExpiryDate(): String {
     val currentDate = find { it.substring(it.length - 2, it.length).parseInt() == maxDate }
 
     return currentDate.validateString()
+}
+
+// 이미지 전처리: 그레이스케일 + 대비 증가
+fun Bitmap.preprocessForOcr(): Bitmap {
+    // 1. 그레이스케일 변환
+    val grayscaleBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(grayscaleBitmap)
+    val paint = Paint()
+    val colorMatrix = ColorMatrix()
+    colorMatrix.setSaturation(0f)
+    paint.colorFilter = ColorMatrixColorFilter(colorMatrix)
+    canvas.drawBitmap(this, 0f, 0f, paint)
+
+    // 2. 대비 조정 (optional, 계수 1.5~2.0 내외 실험)
+    val contrasted = grayscaleBitmap.adjustContrast(1.5f)
+    return contrasted
+}
+
+// 대비 조정 함수
+fun Bitmap.adjustContrast(contrast: Float): Bitmap {
+    val contrastedBitmap = Bitmap.createBitmap(width, height, config)
+    val canvas = Canvas(contrastedBitmap)
+    val paint = Paint()
+    val cm = ColorMatrix(
+        floatArrayOf(
+            contrast, 0f, 0f, 0f, 0f,
+            0f, contrast, 0f, 0f, 0f,
+            0f, 0f, contrast, 0f, 0f,
+            0f, 0f, 0f, 1f, 0f
+        )
+    )
+    paint.colorFilter = ColorMatrixColorFilter(cm)
+    canvas.drawBitmap(this, 0f, 0f, paint)
+    return contrastedBitmap
 }
